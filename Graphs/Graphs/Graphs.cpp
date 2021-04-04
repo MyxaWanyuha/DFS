@@ -7,67 +7,53 @@
 class Graph
 {
 public:
-    Graph(int vertices)
+    Graph( std::vector<std::pair<int, int>> V)
     {
-        adjLists.resize(vertices);
-        visited.resize(vertices);
-    }
-
-    void addEdge(int src, int dest)
-    {
-        if(!bIsConstructed)
-            adjLists[src].push_back(dest);
-    }
-
-    void addEdge(std::pair<int, int>& edge)
-    {
-        if (!bIsConstructed)
+        VertexCount = FindVertexCount(V);
+        adjLists.resize(VertexCount);
+        for (auto& edge : V)
             adjLists[edge.first].push_back(edge.second);
-    }
-
-    void FinishConstruct()
-    {
         for (auto& e : adjLists)
-        {
             std::sort(e.begin(), e.end());
-        }
-        bIsConstructed = true;
     }
 
     void DFS(std::vector<std::pair<int, int>>& T,
         std::vector<std::pair<int, int>>& B,
         std::vector<int>& num,
         std::vector<int>& father,
-        int& i, int v);
-private:
-    std::vector<std::vector<int>> adjLists;
-    std::vector<bool> visited;
-    bool bIsConstructed = false;
-};
-
-void Graph::DFS(std::vector<std::pair<int, int>>& T,
-    std::vector<std::pair<int, int>>& B, 
-    std::vector<int>& num, 
-    std::vector<int>& father, 
-    int& i, int v)
-{
-    if (!bIsConstructed) return;
-
-    num[v] = i++;
-    for (auto u : adjLists[v])
+        int& i, int v)
     {
-        if (num[u] == -1)
+        num[v] = i++;
+        for (auto u : adjLists[v])
         {
-            T.push_back(std::make_pair(u, v));
-            father[u] = v;
-            DFS(T, B, num, father, i, u);
-        }
-        else if (num[u] > num[v] && u != father[v])
-        {
-            B.push_back(std::make_pair(u, v));
+            if (num[u] == -1)
+            {
+                T.push_back({ v, u });
+                father[u] = v;
+                DFS(T, B, num, father, i, u);
+            }
+            else if (num[u] < num[v] && u != father[v])
+                B.push_back({ v, u });
         }
     }
-}
+
+    int GetVertexCount() const { return VertexCount; }
+private:
+    int FindVertexCount(std::vector<std::pair<int, int>>& V) const
+    {
+        int res = -1;
+        for (auto& e : V)
+        {
+            auto eMax = std::max(e.first, e.second);
+            if (eMax > res)
+                res = eMax;
+        }
+
+        return res + 1;
+    }
+    int VertexCount;
+    std::vector<std::vector<int>> adjLists;
+};
 
 std::vector<std::pair<int, int>> ParseInput(std::string& input)
 {
@@ -108,19 +94,6 @@ std::vector<std::pair<int, int>> ParseInput(std::string& input)
     return res;
 }
 
-int FindVertexCount(std::vector<std::pair<int, int>>& V)
-{
-    int res = -1;
-    for (auto& e : V)
-    {
-        auto eMax = std::max(e.first, e.second);
-        if (eMax > res)
-            res = eMax;
-    }
-
-    return res + 1;
-}
-
 void OutputToFile(std::string fileName, std::vector<std::pair<int, int>>& v)
 {
     std::ofstream of(fileName);
@@ -139,7 +112,7 @@ void OutputToFile(std::string fileName, std::vector<std::pair<int, int>>& v)
 int main()
 {
     {
-        std::ifstream t("graph2.txt");
+        std::ifstream t("graph1.txt");
         std::string input;
         t.seekg(0, std::ios::end);
         input.reserve(t.tellg());
@@ -147,23 +120,17 @@ int main()
         input.assign((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
 
         auto V = ParseInput(input);
-        auto vertexCount = FindVertexCount(V);
-
-        Graph g(vertexCount);
-        for (auto& e : V)
-        {
-            g.addEdge(e);
-        }
-        g.FinishConstruct();
+        //V = { {0, 1}, {0, 6}, {1, 2}, {1, 4}, {1, 5}, {2, 3}, {2, 4}, {3, 4}, {5, 6}, {5, 7}, {5, 8}, {7, 8} };
+        Graph g(V);
 
         std::vector<std::pair<int, int>> T;
         std::vector<std::pair<int, int>> B;
-        std::vector<int> num(vertexCount, -1);
-        std::vector<int> father(vertexCount, -1);
+        std::vector<int> num(g.GetVertexCount(), -1);
+        std::vector<int> father(g.GetVertexCount(), -1);
         int i = 0;
 
-        for (int j = 0; j < vertexCount; ++j)
-            g.DFS(T, B, num, father, i, j);
+        //for (int j = 0; j < g.GetVertexCount(); ++j)
+            g.DFS(T, B, num, father, i, 0);
 
         if (B.size() == 0)
             std::cout << "Is tree\n";
