@@ -11,6 +11,8 @@ public:
     {
         VertexCount = FindVertexCount(V);
         adjLists.resize(VertexCount);
+        num.resize(VertexCount, -1);
+        father.resize(VertexCount, -1);
         for (auto& edge : V)
             adjLists[edge.first].push_back(edge.second);
         for (auto& e : adjLists)
@@ -19,8 +21,6 @@ public:
 
     void DFS(std::vector<std::pair<int, int>>& T,
         std::vector<std::pair<int, int>>& B,
-        std::vector<int>& num,
-        std::vector<int>& father,
         int& i, int v)
     {
         num[v] = i++;
@@ -30,9 +30,9 @@ public:
             {
                 T.push_back({ v, u });
                 father[u] = v;
-                DFS(T, B, num, father, i, u);
+                DFS(T, B, i, u);
             }
-            else if (num[u] < num[v] && u != father[v])
+            else if (num[u] > num[v] && u != father[v])
                 B.push_back({ v, u });
         }
     }
@@ -53,6 +53,8 @@ private:
     }
     int VertexCount;
     std::vector<std::vector<int>> adjLists;
+    std::vector<int> num;
+    std::vector<int> father;
 };
 
 std::vector<std::pair<int, int>> ParseInput(std::string& input)
@@ -112,7 +114,7 @@ void OutputToFile(std::string fileName, std::vector<std::pair<int, int>>& v)
 int main()
 {
     {
-        std::ifstream t("graph1.txt");
+        std::ifstream t("graph2.txt");
         std::string input;
         t.seekg(0, std::ios::end);
         input.reserve(t.tellg());
@@ -125,12 +127,10 @@ int main()
 
         std::vector<std::pair<int, int>> T;
         std::vector<std::pair<int, int>> B;
-        std::vector<int> num(g.GetVertexCount(), -1);
-        std::vector<int> father(g.GetVertexCount(), -1);
         int i = 0;
 
-        //for (int j = 0; j < g.GetVertexCount(); ++j)
-            g.DFS(T, B, num, father, i, 0);
+        for (int j = 0; j < g.GetVertexCount(); ++j)
+            g.DFS(T, B, i, j);
 
         if (B.size() == 0)
             std::cout << "Is tree\n";
