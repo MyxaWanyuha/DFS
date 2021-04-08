@@ -12,6 +12,7 @@ public:
         VertexCount = FindVertexCount(V);
         adjLists.resize(VertexCount);
         num.resize(VertexCount, -1);
+        visited.resize(VertexCount, 0);
         father.resize(VertexCount, -1);
         for (auto& edge : V)
             adjLists[edge.first].push_back(edge.second);
@@ -26,6 +27,7 @@ public:
         num[v] = i++;
         for (auto u : adjLists[v])
         {
+            visited[v]++;
             if (num[u] == -1)
             {
                 T.push_back({ v, u });
@@ -38,6 +40,7 @@ public:
     }
 
     int GetVertexCount() const { return VertexCount; }
+    int IsVisitedVertex(int v) { return visited[v] == adjLists[v].size(); }
 private:
     int FindVertexCount(std::vector<std::pair<int, int>>& V) const
     {
@@ -53,6 +56,7 @@ private:
     }
     int VertexCount;
     std::vector<std::vector<int>> adjLists;
+    std::vector<int> visited;
     std::vector<int> num;
     std::vector<int> father;
 };
@@ -114,7 +118,7 @@ void OutputToFile(std::string fileName, std::vector<std::pair<int, int>>& v)
 int main()
 {
     {
-        std::ifstream t("graph2.txt");
+        std::ifstream t("graph1.txt");
         std::string input;
         t.seekg(0, std::ios::end);
         input.reserve(t.tellg());
@@ -130,7 +134,21 @@ int main()
         int i = 0;
 
         for (int j = 0; j < g.GetVertexCount(); ++j)
-            g.DFS(T, B, i, j);
+            if(!g.IsVisitedVertex(j))
+                g.DFS(T, B, i, j);
+
+        bool isIncoherent = true;
+        for (int j = 0; j < g.GetVertexCount(); ++j)
+            if (g.IsVisitedVertex(j) != 1)
+            {
+                isIncoherent = false;
+                break;
+            }
+
+        if(isIncoherent)
+            std::cout << "incoherent\n";
+        else
+            std::cout << "not incoherent\n";
 
         if (B.size() == 0)
             std::cout << "Is tree\n";
